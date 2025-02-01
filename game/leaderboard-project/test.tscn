@@ -1,0 +1,39 @@
+[gd_scene load_steps=5 format=3 uid="uid://d1o7xvbo6y5ar"]
+
+[ext_resource type="Script" path="res://node_3d.gd" id="1_8axy3"]
+[ext_resource type="Script" path="res://WebSocketManager.gd" id="2_mvn1l"]
+[ext_resource type="Script" path="res://UIManager.gd" id="3_jmtwg"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_eu8hr"]
+
+[node name="Node3D" type="Node3D"]
+script = ExtResource("1_8axy3")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(-0.673709, 0.738996, 0, 0.738996, 0.673709, 0, 0, 0, 1, -0.129226, 1.8724, 1.63088)
+
+[node name="WebSocketManager" type="Node" parent="."]
+script = ExtResource("2_mvn1l")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.892311, 0)
+mesh = SubResource("CylinderMesh_eu8hr")
+
+[node name="UIManager" type="Node" parent="."]
+script = ExtResource("3_jmtwg")
+
+[node name="SendButton" type="Button" parent="UIManager"]
+offset_left = 95.0
+offset_top = 36.0
+offset_right = 292.0
+offset_bottom = 67.0
+text = "Update kill
+"
+
+[node name="ConnectButton" type="Button" parent="UIManager"]
+offset_left = 101.0
+offset_top = 98.0
+offset_right = 173.0
+offset_bottom = 129.0
+text = "Connect 
+"
