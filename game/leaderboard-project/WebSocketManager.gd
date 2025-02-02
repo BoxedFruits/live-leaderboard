@@ -9,7 +9,7 @@ var is_connecting = false
 func connect_to_ws() -> void:
 	print("Trying to Connect...")
 	var err = socket.connect_to_url(websocket_url)
-	print("Erro is: ",err)
+
 	if err != OK:
 		print("Unable to connect", err)
 		set_process(false)
@@ -19,7 +19,7 @@ func connect_to_ws() -> void:
 
 		# Send data.
 		print("ready state: ",  socket.get_ready_state())
-		socket.send_text("Test packet")
+		#socket.send_text("Test packet")
 		print("Sent test packet")
 
 func send_message(message: String):

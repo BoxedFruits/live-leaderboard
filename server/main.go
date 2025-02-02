@@ -6,10 +6,9 @@ package main
 import (
 	"fmt"
 	"log"
+	"main/clients"
 	"math/rand/v2"
 	"net/http"
-
-	"github.com/gorilla/websocket"
 )
 
 type MatchStatuses string
@@ -22,25 +21,12 @@ const (
 	SERVER_BAD          MatchStatuses = "ERROR_IN_SERVER"
 )
 
-type ClientConnStatuses string
-
-const (
-	CONNETCING    ClientConnStatuses = "CONNECTING"
-	CONNECTED     ClientConnStatuses = "CONNECTED"
-	DISCONNECTING ClientConnStatuses = "DISCONNECTING"
-)
-
-type Client struct {
-	ClientId   uint
-	ConnStatus ClientConnStatuses
-}
-
 type Leaderboard struct {
 	PlayerInfos []PlayerInfo
 }
 
 type PlayerInfo struct {
-	Client Client
+	Client *clients.Client
 	Kills  uint8
 	Deaths uint8
 }
@@ -63,12 +49,6 @@ type Match struct {
 
 const MAX_PLAYER_COUNT = 4
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin:     func(r *http.Request) bool { return true },
-}
-
 func main() {
 	println("Starting server...")
 	// Create a match and keep track
@@ -89,17 +69,10 @@ func main() {
 func myHandler(w http.ResponseWriter, req *http.Request, testMatch *Match) {
 	println("Got a connection")
 
-	conn, err := upgrader.Upgrade(w, req, nil)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	defer conn.Close()
+	client, conn, err := clients.InitializeClient(w, req)
 
-	//otherwise, keep track of client
-	client := Client{
-		ClientId:   rand.Uint(),
-		ConnStatus: CONNECTED,
+	if err != nil {
+		log.Fatal("Could not upgrade connection to websocket")
 	}
 
 	//Find/create a match
@@ -134,7 +107,7 @@ func initMatch() *Match {
 	}
 }
 
-func (match *Match) ConnectClientToMatch(c Client) {
+func (match *Match) ConnectClientToMatch(c *clients.Client) {
 	if match.CurrentPlayerCount == MAX_PLAYER_COUNT {
 		fmt.Println("Too many players. Cannot add another to this server")
 		return
@@ -146,6 +119,6 @@ func (match *Match) ConnectClientToMatch(c Client) {
 		Deaths: 0,
 	}
 
-	println("Client conencted: ", c.ClientId)
+	println("Client connected: ", c.ClientId)
 	match.Players = append(match.Players, p)
 }
