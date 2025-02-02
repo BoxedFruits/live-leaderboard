@@ -4,11 +4,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"main/clients"
 	"math/rand/v2"
 	"net/http"
+
+	"github.com/gorilla/websocket"
 )
 
 type MatchStatuses string
@@ -47,6 +50,11 @@ type Match struct {
 	Leaderboard        Leaderboard
 }
 
+type WsRequest struct {
+	Command string      `json:"command"`
+	Value   interface{} `json:"value"`
+}
+
 const MAX_PLAYER_COUNT = 4
 
 func main() {
@@ -81,19 +89,59 @@ func myHandler(w http.ResponseWriter, req *http.Request, testMatch *Match) {
 	defer conn.Close()
 
 	for {
+		parseMessages(conn)
 		// Read message from client
-		messageType, message, err := conn.ReadMessage()
-		if err != nil {
-			log.Println("read:", err)
-			break
-		}
-		log.Printf("recv: %s", message)
+		// messageType, message, err := conn.ReadMessage()
+		// if err != nil {
+		// 	log.Println("read:", err)
+		// 	break
+		// }
+		// log.Printf("recv: %s", message)
+		//Parse message into a command
 
+		// jsonStr, err := json.Marshal(message)
+		// if err != nil {
+		// fmt.Println(err)
+		// return
+		// }
+		//
+		// println(jsonStr)
+		//
 		// Write message to client
-		err = conn.WriteMessage(messageType, message)
-		if err != nil {
-			log.Println("write:", err)
-			break
+		// err = conn.WriteMessage(messageType, message)
+		// if err != nil {
+		// 	log.Println("write:", err)
+		// 	break
+		// }
+	}
+}
+
+func parseMessages(conn *websocket.Conn) {
+
+	_, message, err := conn.ReadMessage()
+	if err != nil {
+		log.Println("read:", err)
+		// break
+	}
+
+	log.Printf("recv: %s", message)
+
+	var jsonStr WsRequest
+	errMarshal := json.Unmarshal(message, &jsonStr)
+
+	if errMarshal != nil {
+		fmt.Println(errMarshal)
+		return
+	}
+	println(jsonStr.Command)
+	switch jsonStr.Command {
+	case "command":
+		{
+			println("in foo")
+		}
+	case "Hello, Server!":
+		{
+			println("In the second place")
 		}
 	}
 }
@@ -121,4 +169,8 @@ func (match *Match) ConnectClientToMatch(c *clients.Client) {
 
 	println("Client connected: ", c.ClientId)
 	match.Players = append(match.Players, p)
+}
+
+func (match *Match) GetLeaderboard() Leaderboard {
+	return match.Leaderboard
 }

@@ -12,7 +12,10 @@ func _on_connect_button_pressed():
 	websocket_manager.connect_to_ws()
 
 func _on_send_button_pressed():
-	websocket_manager.send_message("Hello, Server!")
+	var message_dict = {"command": "Hello, Server!"}
+
+	var json_string = JSON.stringify(message_dict)
+	websocket_manager.send_message(json_string)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:

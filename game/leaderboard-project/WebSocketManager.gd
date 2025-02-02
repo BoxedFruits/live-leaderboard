@@ -37,7 +37,7 @@ func _process(delta: float) -> void:
 
 		if state == WebSocketPeer.STATE_OPEN:
 			print("Connected to WebSocket!")
-			socket.send_text("Test packet")
+			socket.send_text("{'foo':'Test packet'}")
 			print("Sent test packet")
 			is_connecting = false  # Stop trying to connect
 		elif state == WebSocketPeer.STATE_CLOSING:
@@ -45,3 +45,10 @@ func _process(delta: float) -> void:
 		elif state == WebSocketPeer.STATE_CLOSED:
 			print("WebSocket connection closed.")
 			set_process(false)  # Stop processing after disconnect
+
+	if socket.get_ready_state() == WebSocketPeer.STATE_OPEN:
+		socket.poll()  # Polling only when connected
+		
+		while socket.get_available_packet_count() > 0:
+			var message = socket.get_packet().get_string_from_utf8()
+			print("Received message from server:", message)
