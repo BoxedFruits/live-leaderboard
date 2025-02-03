@@ -37,3 +37,10 @@ offset_right = 173.0
 offset_bottom = 129.0
 text = "Connect 
 "
+
+[node name="Leaderboard" type="Button" parent="UIManager"]
+offset_left = 119.0
+offset_top = 190.0
+offset_right = 307.0
+offset_bottom = 228.0
+text = "Leaderboard"

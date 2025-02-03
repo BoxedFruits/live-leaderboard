@@ -10,6 +10,7 @@ import (
 	"main/clients"
 	"math/rand/v2"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/websocket"
 )
@@ -29,7 +30,6 @@ type Leaderboard struct {
 }
 
 type PlayerInfo struct {
-	Client *clients.Client
 	Kills  uint8
 	Deaths uint8
 }
@@ -46,8 +46,7 @@ type Match struct {
 	MatchStatus        MatchStatuses
 	CurrentPlayerCount uint8
 	MaxPlayerCount     uint8
-	Players            []PlayerInfo
-	Leaderboard        Leaderboard
+	Players            map[*clients.Client]*PlayerInfo
 }
 
 type WsRequest struct {
@@ -89,7 +88,7 @@ func myHandler(w http.ResponseWriter, req *http.Request, testMatch *Match) {
 	defer conn.Close()
 
 	for {
-		parseMessages(conn)
+		testMatch.parseMessages(conn, client)
 		// Read message from client
 		// messageType, message, err := conn.ReadMessage()
 		// if err != nil {
@@ -116,7 +115,7 @@ func myHandler(w http.ResponseWriter, req *http.Request, testMatch *Match) {
 	}
 }
 
-func parseMessages(conn *websocket.Conn) {
+func (match *Match) parseMessages(conn *websocket.Conn, client *clients.Client) {
 
 	_, message, err := conn.ReadMessage()
 	if err != nil {
@@ -143,7 +142,37 @@ func parseMessages(conn *websocket.Conn) {
 		{
 			println("In the second place")
 		}
+	case "IncrementKillCount":
+		{
+			println("Incrementing kill count")
+			match.Players[client].Kills += 1
+		}
+	case "GetLeaderboard":
+		{
+			err = conn.WriteMessage(1, match.GetLeaderboard())
+			if err != nil {
+				log.Println("write:", err)
+				break
+			}
+		}
 	}
+}
+
+// Returns map of clientId: playerInfo, Kills,Deaths
+func (match *Match) GetLeaderboard() []byte {
+	leaderboard := make(map[string]*PlayerInfo)
+
+	for k, v := range match.Players {
+		leaderboard[strconv.FormatUint(uint64(k.ClientId), 10)] = v
+	}
+
+	json, err := json.Marshal(leaderboard)
+
+	if err != nil {
+		println("Error making leaderboard", err)
+	}
+
+	return json
 }
 
 func initMatch() *Match {
@@ -152,6 +181,7 @@ func initMatch() *Match {
 		MatchStatus:        WAITING_FOR_PLAYERS,
 		CurrentPlayerCount: 0,
 		MaxPlayerCount:     MAX_PLAYER_COUNT,
+		Players:            make(map[*clients.Client]*PlayerInfo),
 	}
 }
 
@@ -161,16 +191,11 @@ func (match *Match) ConnectClientToMatch(c *clients.Client) {
 		return
 	}
 
-	p := PlayerInfo{
-		Client: c,
+	p := &PlayerInfo{
 		Kills:  0,
 		Deaths: 0,
 	}
 
 	println("Client connected: ", c.ClientId)
-	match.Players = append(match.Players, p)
-}
-
-func (match *Match) GetLeaderboard() Leaderboard {
-	return match.Leaderboard
+	match.Players[c] = p
 }
